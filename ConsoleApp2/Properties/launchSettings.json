@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "ConsoleApp1": {
+    "Websocket": {
       "commandName": "Project",
       "launchBrowser": false,
       "environmentVariables": {

@@ -1,9 +1,5 @@
 ﻿using CleanArchitecture.Rabbit;
-using ConsoleApp1;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using CleanArchitecture.WebSocket;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureWebHostDefaults(webBuilder =>

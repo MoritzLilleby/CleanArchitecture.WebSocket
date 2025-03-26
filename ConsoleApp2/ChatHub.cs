@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 
-namespace ConsoleApp1
+namespace CleanArchitecture.WebSocket
 {
     public class ChatHub : Hub
     {
