@@ -1,5 +1,6 @@
 ﻿using CleanArchitecture.Rabbit;
 using CleanArchitecture.WebSocket;
+using CleanArchitecture.WebSocket.Authentications;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureWebHostDefaults(webBuilder =>
@@ -12,29 +13,44 @@ var host = Host.CreateDefaultBuilder(args)
             services.AddSingleton<IMessageHandlerBase, MyMessageHandler>();
 
             services.AddRabbitReceiver();
-            services.AddRabbitSender();
 
             services.AddCors(options =>
             {
-                options.AddPolicy("CorsPolicy",
-                builder => builder
-                 .AllowAnyMethod()
-                 .AllowAnyHeader()
-                 .AllowCredentials()
-                 .SetIsOriginAllowed((host) => true));
+                options.AddPolicy("AllowLocalhost8080",
+                    builder =>
+                    {
+                        builder.WithOrigins("http://localhost:8080")
+                               .AllowAnyHeader()
+                               .AllowAnyMethod()
+                               .AllowCredentials();
+                    });
             });
+
+
+            services.AddAuthentications();
+
+            //services.AddAuthorization(options =>
+            //{
+            //    options.FallbackPolicy = options.DefaultPolicy;
+            //});
 
         });
 
         webBuilder.Configure(app =>
         {
+            
             app.UseRouting();
 
-            app.UseCors("CorsPolicy");
+            app.UseCors("AllowLocalhost8080");
+
+            app.UseAuthentication();
+
+            app.UseAuthorization();
+
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHub<ChatHub>("/chatHub");
+                endpoints.MapHub<ChatHub>("/chatHub").RequireCors("AllowLocalhost8080");
 
                 endpoints.MapGet("/", async context =>
                 {
@@ -45,7 +61,7 @@ var host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
-        services.AddHostedService<Worker>();
+        //services.AddHostedService<Worker>();
     })
     .Build();
 
@@ -54,36 +70,18 @@ await host.RunAsync();
 public class Worker : BackgroundService
 {
     private readonly Receiver _receiver;
-    private readonly Sender _sender;
 
-    public Worker(Receiver receiver, Sender sender)
+    public Worker(Receiver receiver/*, Sender sender*/)
     {
         _receiver = receiver;
-        _sender = sender;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        //while (true)
         {
 
             // Subscribe to the queue
             await _receiver.Receive("hello");
-
-            //// Send a message
-            //for (int i = 0; i < 10; i++)
-            //{
-            //    await Task.Delay(3000);
-            //    await _sender.Send($"Message {i}", "hello");
-            //}
-
-            //await _receiver.Receive("hi");
-
-            //for (int i = 0; i < 10; i++)
-            //{
-            //    await Task.Delay(3000);
-            //    await _sender.Send($"Message {i}", "hi");
-            //}
         }
     }
 }

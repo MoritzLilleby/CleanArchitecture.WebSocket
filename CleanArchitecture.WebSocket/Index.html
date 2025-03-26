@@ -11,25 +11,61 @@
     <div id="messagesList"></div>
 
     <script>
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("https://localhost:56951/chatHub?userId=100")
-            .withAutomaticReconnect()
-            .build();
 
-        connection.on("ReceiveMessage", (message, udefinert) => {
-            const li = document.createElement("li");
-            li.textContent = message;
-            document.getElementById("messagesList").appendChild(li);
-        });
+        async function getToken(username, password) {
+            const response = await fetch('https://localhost:7147/api/Auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            });
 
-        connection.onreconnecting(error => {
-            console.log(`Connection lost due to error "${error}". Reconnecting...`);
-        });
+            if (!response.ok) {
+                throw new Error('Login failed');
+            }
 
-        connection.onreconnected(connectionId => {
-            console.log(`Connection reestablished. Connected with connectionId "${connectionId}".`);
-        });
+            const data = await response.json();
+            return data.token;
+        }
 
-        connection.start().catch(err => console.error(err));
+        function showLoginDialog() {
+            const username = prompt('Enter your username:');
+            const password = prompt('Enter your password:');
+            return { username, password };
+        }
+
+        async function startConnection() {
+            try {
+                const { username, password } = showLoginDialog();
+                const token = await getToken(username, password);
+
+                const connection = new signalR.HubConnectionBuilder()
+                    .withUrl('https://localhost:56951/chatHub', { accessTokenFactory: () => token })
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection.on('ReceiveMessage', (message, udefinert) => {
+                    const li = document.createElement('li');
+                    li.textContent = message;
+                    document.getElementById('messagesList').appendChild(li);
+                });
+
+                connection.onreconnecting(error => {
+                    console.log(`Connection lost due to error "${error}". Reconnecting...`);
+                });
+
+                connection.onreconnected(connectionId => {
+                    console.log(`Connection reestablished. Connected with connectionId "${connectionId}".`);
+                });
+
+                await connection.start();
+                console.log('Connection started');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        startConnection();
     </script>
 </body>

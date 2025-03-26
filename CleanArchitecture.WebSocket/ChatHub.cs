@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
+using System.Security.Claims;
 
 namespace CleanArchitecture.WebSocket
 {
+    [Authorize]
     public class ChatHub : Hub
     {
 
@@ -10,7 +13,12 @@ namespace CleanArchitecture.WebSocket
 
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.GetHttpContext().Request.Query["userId"];
+
+            var kk = Context.User?.Identity?.Name;
+
+            var accessToken = Context.GetHttpContext()?.Request.Query["access_token"];
+
+            var email = Context.User?.FindFirst(ClaimTypes.Email)?.Value!;
 
             Connections.TryAdd(Context.ConnectionId, Context.ConnectionId);
             await base.OnConnectedAsync();
