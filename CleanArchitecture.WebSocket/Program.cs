@@ -61,7 +61,7 @@ var host = Host.CreateDefaultBuilder(args)
     })
     .ConfigureServices((context, services) =>
     {
-        //services.AddHostedService<Worker>();
+        services.AddHostedService<Worker>();
     })
     .Build();
 
